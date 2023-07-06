@@ -32,6 +32,8 @@
    pip install slither
    pip install solc-select
 
+   // If solc-select gives troubles try running - npm install -g solc
+
    // In the future we can create a text file with all dependencies.
    // pip install -r requirements.txt
    ```
