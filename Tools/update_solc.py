@@ -3,7 +3,7 @@ import subprocess
 from slither.slither import Slither
 
 # Specify the directory path
-DIRECTORY_PATH = "Contracts"
+DIRECTORY_PATH = "../Contracts"
 
 def get_installed_versions():
     result = subprocess.run(["solc-select", "versions"], capture_output=True, text=True)
