@@ -28,7 +28,11 @@ def process_contracts(file_path):
         for line in lines:
             if line.startswith("pragma solidity"):
                 # Use the solc version specified in the contract file
-                version = line.split("^")[1].strip().replace(";", "")
+                if "^" in line:
+                    version = line.split("^")[1].strip().replace(";", "")
+                else:
+                    # Handle the case where the version is specified directly
+                    version = line.split(" ")[2].strip().replace(";", "")
                 use_solc(version)
                 break
 

@@ -22,7 +22,11 @@ def get_used_versions(directory_path):
                 lines = file.readlines()
                 for line in lines:
                     if line.startswith("pragma solidity"):
-                        version = line.split("^")[1].strip().replace(";", "")
+                        if "^" in line:
+                            version = line.split("^")[1].strip().replace(";", "")
+                        else:
+                            # Handle the case where the version is specified directly
+                            version = line.split(" ")[2].strip().replace(";", "")
                         versions.add(version)
                         break
 
