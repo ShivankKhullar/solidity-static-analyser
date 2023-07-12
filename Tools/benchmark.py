@@ -1,5 +1,6 @@
 # benchmark.py
 import time
+from termcolor import colored
 
 # Create a dictionary to hold total execution times for each function
 function_times = {}
@@ -19,4 +20,5 @@ def function_benchmark(func):
 
 def print_benchmark_results():
     for function_name, total_time in function_times.items():
-        print(f"Total execution time for {function_name}: {total_time} milliseconds")
+        print(colored(f"Total execution time for {function_name}: {total_time:.4f} milliseconds", 'green'))
+
