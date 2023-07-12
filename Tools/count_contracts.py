@@ -5,6 +5,7 @@ from slither.core.expressions import CallExpression
 from slither.slithir.operations.library_call import LibraryCall
 import os
 from prettytable import PrettyTable
+import re
 
 # Specify the directory path
 directory_path = "../TestingContracts"
@@ -38,17 +39,18 @@ def process_directory(directory_path):
 def process_contracts(file_path):
     contract_results = {}
 
+    # Define the regular expression pattern for the version
+    version_pattern = re.compile(r"\d+\.\d+\.\d+")
+
     with open(file_path, "r") as file:
         lines = file.readlines()
         for line in lines:
             if line.startswith("pragma solidity"):
                 # Use the solc version specified in the contract file
-                if "^" in line:
-                    version = line.split("^")[1].strip().replace(";", "")
-                else:
-                    # Handle the case where the version is specified directly without ^
-                    version = line.split(" ")[2].strip().replace(";", "")
-                use_solc(version)
+                version_match = version_pattern.search(line)
+                if version_match:
+                    version = version_match.group()
+                    use_solc(version)
                 break
 
     # Initialize Slither
