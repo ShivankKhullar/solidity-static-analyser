@@ -6,9 +6,10 @@ from slither.slithir.operations.library_call import LibraryCall
 import os
 from prettytable import PrettyTable
 import re
+from benchmark import function_benchmark,print_benchmark_results
 
 # Specify the directory path
-directory_path = "../TestingContracts"
+directory_path = "../Contracts"
 
 current_version = None
 
@@ -24,6 +25,7 @@ def calculate_inheritance_depth(contract):
     # And since multiple inhertance is allowed we'll looping through the list of contracts.
     return 1 + max(calculate_inheritance_depth(inherited_contract) for inherited_contract in inherited_contracts)
 
+@function_benchmark
 def process_directory(directory_path):
     results = {}
 
@@ -136,7 +138,8 @@ def calculate_nesting_depth(function):
                     traverse(son)
 
     # Start the traversal from the entry node of the CFG
-    traverse(function.entry_point)
+    if function.entry_point is not None:
+        traverse(function.entry_point)
 
     return max_depth
 
@@ -163,3 +166,5 @@ for file_name, contract_results in results.items():
             table.add_row([file_name, len(contract_results), contract_name, inheritance_depth, len(function_results), function_name, parameter_count, nesting_depth, function_calls])
 
 print(table)
+
+print_benchmark_results()
