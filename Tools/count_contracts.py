@@ -2,6 +2,7 @@ import subprocess
 from slither.slither import Slither
 from slither.core.cfg.node import NodeType
 from slither.core.expressions import CallExpression
+from slither.slithir.operations.library_call import LibraryCall
 import os
 from prettytable import PrettyTable
 
@@ -65,12 +66,29 @@ def process_contracts(file_path):
             parameters = function.parameters
             # Calculate the nesting depth
             nesting_depth = calculate_nesting_depth(function)
-            function_results[function.name] = (len(parameters), nesting_depth)
+            # Calculate the number of function calls
+            function_calls = calculate_function_call(function)
+            function_results[function.name] = (len(parameters), nesting_depth, function_calls)
         # Calculate the inheritance depth
         inheritance_depth = calculate_inheritance_depth(contract)
         contract_results[contract.name] = (function_results, inheritance_depth)
 
     return contract_results
+
+def calculate_function_call(function):
+    # Get the nodes of the function's CFG
+    nodes = function.nodes
+
+    # Initialize the number of function calls to 0
+    function_calls = 0
+
+    # Traverse the CFG
+    for node in nodes:
+        # If the node contains a function call, increment the number of function calls
+        if isinstance(node.expression, (CallExpression, LibraryCall)):
+            function_calls += 1
+
+    return function_calls
 
 def calculate_nesting_depth(function):
     # Get the nodes of the function's CFG
@@ -132,15 +150,14 @@ results = process_directory(directory_path)
 
 # Create the table
 table = PrettyTable()
-table.field_names = ["File Name", "Number of Contracts", "Contract Name", "Inheritance Depth", "Number of Functions", "Function Name", "Number of Parameters", "Nesting Depth"]
+table.field_names = ["File Name", "Number of Contracts", "Contract Name", "Inheritance Depth", "Number of Functions", "Function Name", "Number of Parameters", "Nesting Depth", "Function Calls"]
 
 # Populate the table
 for file_name, contract_results in results.items():
     for contract_name, data in contract_results.items():
         function_results, inheritance_depth = data
         for function_name, function_data in function_results.items():
-            parameter_count, nesting_depth = function_data
-            table.add_row([file_name, len(contract_results), contract_name, inheritance_depth, len(function_results), function_name, parameter_count, nesting_depth])
+            parameter_count, nesting_depth, function_calls = function_data
+            table.add_row([file_name, len(contract_results), contract_name, inheritance_depth, len(function_results), function_name, parameter_count, nesting_depth, function_calls])
 
-# Print the table
 print(table)

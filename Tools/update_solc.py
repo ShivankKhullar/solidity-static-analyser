@@ -5,8 +5,8 @@ from benchmark import print_benchmark_results,function_benchmark
 import re
 
 # Specify the directory path
-# DIRECTORY_PATH = 'C:/Github/DAppSCAN/DAppSCAN-source/contracts/Ackee_Blockchain-GoodGhosting'
-DIRECTORY_PATH = "../Contracts"
+DIRECTORY_PATH = 'C:/Github/DAppSCAN/DAppSCAN-source/contracts/Ackee_Blockchain-GoodGhosting'
+# DIRECTORY_PATH = "../Contracts"
 
 def get_installed_versions():
     result = subprocess.run(["solc-select", "versions"], capture_output=True, text=True)
@@ -60,7 +60,6 @@ missing_versions = get_missing_versions(installed_versions, used_versions)
 
 if not missing_versions:
     print("You have all needed versions installed.")
-    exit(0)
 else:
     # Install the missing versions, Commented until local host shut down is fixed.
     # install_versions(missing_versions)
