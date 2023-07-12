@@ -1,12 +1,26 @@
 import subprocess
 from slither.slither import Slither
+from slither.core.cfg.node import NodeType
+from slither.core.expressions import CallExpression
 import os
 from prettytable import PrettyTable
 
 # Specify the directory path
-directory_path = "../Contracts"
+directory_path = "../TestingContracts"
 
 current_version = None
+
+def calculate_inheritance_depth(contract):
+    # Get the list of inherited contracts
+    inherited_contracts = contract.inheritance
+
+    # If the contract doesn't inherit from any other contracts, its depth of inheritance is 0
+    if not inherited_contracts:
+        return 0
+
+    # If the contract does inherit from other contracts, its depth of inheritance is 1 plus the maximum depth of inheritance of the contracts it inherits from
+    # And since multiple inhertance is allowed we'll looping through the list of contracts.
+    return 1 + max(calculate_inheritance_depth(inherited_contract) for inherited_contract in inherited_contracts)
 
 def process_directory(directory_path):
     results = {}
@@ -31,7 +45,7 @@ def process_contracts(file_path):
                 if "^" in line:
                     version = line.split("^")[1].strip().replace(";", "")
                 else:
-                    # Handle the case where the version is specified directly
+                    # Handle the case where the version is specified directly without ^
                     version = line.split(" ")[2].strip().replace(";", "")
                 use_solc(version)
                 break
@@ -49,10 +63,62 @@ def process_contracts(file_path):
         for function in functions:
             # Get the list of parameters
             parameters = function.parameters
-            function_results[function.name] = len(parameters)
-        contract_results[contract.name] = function_results
+            # Calculate the nesting depth
+            nesting_depth = calculate_nesting_depth(function)
+            function_results[function.name] = (len(parameters), nesting_depth)
+        # Calculate the inheritance depth
+        inheritance_depth = calculate_inheritance_depth(contract)
+        contract_results[contract.name] = (function_results, inheritance_depth)
 
     return contract_results
+
+def calculate_nesting_depth(function):
+    # Get the nodes of the function's CFG
+    nodes = function.nodes
+    # print(function.name)
+
+    max_depth = 0
+    current_depth = 0
+
+    # Create a set to keep track of visited nodes, had to because loops gave stack overflow
+    visited_nodes = set()
+
+    # Define a recursive function to traverse the CFG
+    def traverse(node):
+        nonlocal max_depth, current_depth
+
+        # If the node has already been visited, return immediately
+        if node in visited_nodes:
+            return
+
+        # Mark the node as visited
+        visited_nodes.add(node)
+
+        # Check the type of the node
+        if node.type in {NodeType.IF, NodeType.STARTLOOP}:
+            # If the node is a control structure that starts a new block, increment the current depth
+            current_depth += 1
+        elif node.type in {NodeType.ENDIF, NodeType.ENDLOOP}:
+            # If the node is a control structure that ends a block, decrement the current depth
+            current_depth -= 1
+
+        # Update the maximum depth
+        max_depth = max(max_depth, current_depth)
+
+        # Traverse all outgoing edges
+        if node is not None:
+            # print(node.type)
+            # print(node.expression)
+            # print("New Depth",current_depth,"Max Depth",max_depth,"Current Depth",current_depth)
+            # Check if the 'sons' attribute exists
+            if hasattr(node, 'sons'):
+                for son in node.sons:
+                    traverse(son)
+
+    # Start the traversal from the entry node of the CFG
+    traverse(function.entry_point)
+
+    return max_depth
 
 # This Function is used to change the Soliditity compiler version to match the contract.
 def use_solc(version):
@@ -66,13 +132,15 @@ results = process_directory(directory_path)
 
 # Create the table
 table = PrettyTable()
-table.field_names = ["File Name", "Number of Contracts", "Contract Name", "Number of Functions", "Function Name", "Number of Parameters"]
+table.field_names = ["File Name", "Number of Contracts", "Contract Name", "Inheritance Depth", "Number of Functions", "Function Name", "Number of Parameters", "Nesting Depth"]
 
 # Populate the table
 for file_name, contract_results in results.items():
-    for contract_name, function_results in contract_results.items():
-        for function_name, parameter_count in function_results.items():
-            table.add_row([file_name, len(contract_results), contract_name, len(function_results), function_name, parameter_count])
+    for contract_name, data in contract_results.items():
+        function_results, inheritance_depth = data
+        for function_name, function_data in function_results.items():
+            parameter_count, nesting_depth = function_data
+            table.add_row([file_name, len(contract_results), contract_name, inheritance_depth, len(function_results), function_name, parameter_count, nesting_depth])
 
 # Print the table
 print(table)
