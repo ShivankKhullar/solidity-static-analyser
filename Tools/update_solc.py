@@ -1,8 +1,11 @@
 import os
 import subprocess
 from slither.slither import Slither
+from benchmark import print_benchmark_results,function_benchmark
+import re
 
 # Specify the directory path
+# DIRECTORY_PATH = 'C:/Github/DAppSCAN/DAppSCAN-source/contracts/Ackee_Blockchain-GoodGhosting'
 DIRECTORY_PATH = "../Contracts"
 
 def get_installed_versions():
@@ -11,24 +14,28 @@ def get_installed_versions():
     versions = [line.split()[0] for line in lines]
     return versions
 
+@function_benchmark
 def get_used_versions(directory_path):
     versions = set()
+    version_pattern = re.compile(r"\d+\.\d+\.\d+")
 
-    # Loop over all files in the directory
-    for file_name in os.listdir(directory_path):
-        if file_name.endswith(".sol"):
-            file_path = os.path.join(directory_path, file_name)
-            with open(file_path, "r") as file:
-                lines = file.readlines()
-                for line in lines:
-                    if line.startswith("pragma solidity"):
-                        if "^" in line:
-                            version = line.split("^")[1].strip().replace(";", "")
-                        else:
-                            # Handle the case where the version is specified directly
-                            version = line.split(" ")[2].strip().replace(";", "")
-                        versions.add(version)
-                        break
+    # Use os.walk to go through all files in directory_path
+    for root, _, files in os.walk(directory_path):
+        # Loop through all files
+        for file in files:
+            # Check and open .sol files
+            if file.endswith('.sol'):
+                file_path = os.path.join(root, file)
+                with open(file_path, "r",encoding='utf-8') as file:
+                    lines = file.readlines()
+                    for line in lines:
+                        if line.startswith("pragma solidity"):
+                            version_match = version_pattern.search(line)
+                            if version_match:
+                                # Add only the first (lowest) version in the list
+                                versions.add(version_match.group())
+                                # Break out of the inner loop as soon as a match is found
+                                break
 
     return versions
 
@@ -55,5 +62,8 @@ if not missing_versions:
     print("You have all needed versions installed.")
     exit(0)
 else:
-    # Install the missing versions
-    install_versions(missing_versions)
+    # Install the missing versions, Commented until local host shut down is fixed.
+    # install_versions(missing_versions)
+    print("Missing Versions ",missing_versions)
+
+print_benchmark_results()
