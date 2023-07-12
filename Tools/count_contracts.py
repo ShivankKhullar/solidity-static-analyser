@@ -11,6 +11,7 @@ from termcolor import colored
 
 # Specify the directory path
 directory_path = "../Contracts"
+# directory_path = 'C:/Github/DAppSCAN/DAppSCAN-source/contracts/Ackee_Blockchain-GoodGhosting'
 
 current_version = None
 
