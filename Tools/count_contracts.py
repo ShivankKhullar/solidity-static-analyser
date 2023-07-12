@@ -7,6 +7,7 @@ import os
 from prettytable import PrettyTable
 import re
 from benchmark import function_benchmark,print_benchmark_results
+from termcolor import colored
 
 # Specify the directory path
 directory_path = "../Contracts"
@@ -29,12 +30,13 @@ def calculate_inheritance_depth(contract):
 def process_directory(directory_path):
     results = {}
 
-    # Loop over all files in the directory
-    for file_name in os.listdir(directory_path):
-        if file_name.endswith(".sol"):
-            file_path = os.path.join(directory_path, file_name)
-            contract_results = process_contracts(file_path)
-            results[file_name] = contract_results
+    # Loop over all directories, subdirectories, and files
+    for root, dirs, filenames in os.walk(directory_path):
+        for file_name in filenames:
+            if file_name.endswith(".sol"):
+                file_path = os.path.join(root, file_name)
+                contract_results = process_contracts(file_path)
+                results[file_name] = contract_results
 
     return results
 
