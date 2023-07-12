@@ -20,5 +20,6 @@ def function_benchmark(func):
 
 def print_benchmark_results():
     for function_name, total_time in function_times.items():
-        print(colored(f"Total execution time for {function_name}: {total_time:.4f} milliseconds", 'green'))
+        formatted_time = colored(f"{total_time:.4f}", 'green', attrs=['bold'])
+        print(colored(f"Total execution time for {function_name}: {formatted_time} milliseconds", 'green'))
 

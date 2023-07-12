@@ -167,6 +167,6 @@ for file_name, contract_results in results.items():
             parameter_count, nesting_depth, function_calls = function_data
             table.add_row([file_name, len(contract_results), contract_name, inheritance_depth, len(function_results), function_name, parameter_count, nesting_depth, function_calls])
 
-print(table)
+print(colored(table, 'light_cyan'))
 
 print_benchmark_results()
