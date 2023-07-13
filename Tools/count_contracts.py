@@ -17,23 +17,22 @@ directory_path = "../Contracts"
 class NodeProcessor:
 
     @staticmethod
-    def process_for_nesting_depth(node):
+    def calculate_nesting_depth(node, state):
         if node is None:
-            return 0
+            state['current_depth'] += 0
         elif node.type in {NodeType.IF, NodeType.STARTLOOP}:
-            return 1
+            state['current_depth'] += 1
         elif node.type in {NodeType.ENDIF, NodeType.ENDLOOP}:
-            return -1
-        else:
-            return 0
+            state['current_depth'] -= 1
+
+        state['max_depth'] = max(state['max_depth'], state['current_depth'])
+        return state
 
     @staticmethod
-    def process_for_function_call(node):
+    def calculate_function_call(node, state):
         if isinstance(node.expression, (CallExpression, LibraryCall)):
-            return 1
-        else:
-            return 0
-
+            state['function_calls'] += 1
+        return state
 
 class CFGTraverser:
 
@@ -41,32 +40,32 @@ class CFGTraverser:
         self.processor = processor
         self.visited_nodes = set()
 
-    def tree_traversal(self, node):
+    def tree_traversal(self, node, state):
         if node in self.visited_nodes:
-            return 0
+            return state
 
         self.visited_nodes.add(node)
+        state = self.processor(node, state)
 
-        count = self.processor(node)
         if node is not None and hasattr(node, 'sons'):
             for son in node.sons:
-                count += self.tree_traversal(son)
+                state = self.tree_traversal(son, state)
 
-        return count
+        return state
 
-    def node_list_traversal(self, nodes):
-        count = 0
+    def node_list_traversal(self, nodes, state):
         for node in nodes:
-            count += self.processor(node)
-        return count
-
+            state = self.processor(node, state)
+        return state
 
 class ContractAnalyzer:
     def __init__(self):
         self.current_version = None
-        self.max_depth = 0
-        self.current_depth = 0
-        self.function_calls = 0
+        self.state = {
+            'max_depth': 0,
+            'current_depth': 0,
+            'function_calls': 0
+        }
 
     @function_benchmark
     def calculate_inheritance_depth(self, contract):
@@ -74,18 +73,19 @@ class ContractAnalyzer:
         if not inherited_contracts:
             return 0
         return 1 + max(self.calculate_inheritance_depth(inherited_contract) for inherited_contract in inherited_contracts)
+    
+    @function_benchmark
+    def calculate_nesting_depth(self, function):
+        self.state['current_depth'] = 0
+        self.state['max_depth'] = 0
+        traverser = CFGTraverser(NodeProcessor.calculate_nesting_depth)
+        self.state = traverser.tree_traversal(function.entry_point, self.state)
 
     @function_benchmark
     def calculate_function_call(self, function):
-        traverser = CFGTraverser(NodeProcessor.process_for_function_call)
-        self.function_calls = traverser.node_list_traversal(function.nodes)
-
-    @function_benchmark
-    def calculate_nesting_depth(self, function):
-        traverser = CFGTraverser(NodeProcessor.process_for_nesting_depth)
-        depth_changes = traverser.tree_traversal(function.entry_point)
-        self.current_depth += depth_changes
-        self.max_depth = max(self.max_depth, self.current_depth)
+        self.state['function_calls'] = 0
+        traverser = CFGTraverser(NodeProcessor.calculate_function_call)
+        self.state = traverser.node_list_traversal(function.nodes, self.state)
 
     def use_solc(self, version):
         if self.current_version != version:
@@ -114,11 +114,10 @@ class ContractAnalyzer:
                 parameters = function.parameters
                 self.calculate_nesting_depth(function)
                 self.calculate_function_call(function)
-                function_results[function.name] = (len(parameters), self.max_depth, self.function_calls)
+                function_results[function.name] = (len(parameters), self.state['max_depth'], self.state['function_calls'])
             inheritance_depth = self.calculate_inheritance_depth(contract)
             contract_results[contract.name] = (function_results, inheritance_depth)
         return contract_results
-
 
 class DirectoryProcessor:
 
