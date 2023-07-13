@@ -13,8 +13,10 @@ from termcolor import colored
 directory_path = "../Contracts"
 # directory_path = 'C:/Github/DAppSCAN/DAppSCAN-source/contracts/Ackee_Blockchain-GoodGhosting'
 
-current_version = None
+# directory_path = "C:\\Users\\shiva\\Downloads\\_Code\\openzeppelin-contracts\\contracts-exposed\\access"
 
+current_version = None
+@function_benchmark
 def calculate_inheritance_depth(contract):
     # Get the list of inherited contracts
     inherited_contracts = contract.inheritance
@@ -40,7 +42,7 @@ def process_directory(directory_path):
                 results[file_name] = contract_results
 
     return results
-
+@function_benchmark
 def process_contracts(file_path):
     contract_results = {}
 
@@ -81,7 +83,7 @@ def process_contracts(file_path):
         contract_results[contract.name] = (function_results, inheritance_depth)
 
     return contract_results
-
+@function_benchmark
 def calculate_function_call(function):
     # Get the nodes of the function's CFG
     nodes = function.nodes
@@ -96,7 +98,7 @@ def calculate_function_call(function):
             function_calls += 1
 
     return function_calls
-
+@function_benchmark
 def calculate_nesting_depth(function):
     # Get the nodes of the function's CFG
     nodes = function.nodes
