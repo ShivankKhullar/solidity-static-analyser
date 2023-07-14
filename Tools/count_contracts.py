@@ -94,9 +94,7 @@ class ContractAnalyzer:
             subprocess.run(["solc-select", "use", version])
             self.current_version = version
 
-    @function_benchmark
-    def process_contracts(self, file_path):
-        contract_results = {}
+    def extract_solidity_version(self, file_path):
         version_pattern = re.compile(r"\d+\.\d+\.\d+")
         with open(file_path, "r") as file:
             lines = file.readlines()
@@ -107,8 +105,12 @@ class ContractAnalyzer:
                         version = version_match.group()
                         self.use_solc(version)
                     break
-        
+
+    @function_benchmark
+    def process_contracts(self, file_path):
+        self.extract_solidity_version(file_path)
         slither = Slither(file_path)
+        contract_results = {}
         contracts = slither.contracts
         for contract in contracts:
             functions = contract.functions
