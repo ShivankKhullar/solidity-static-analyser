@@ -10,11 +10,22 @@ from benchmark import function_benchmark,print_benchmark_results
 from termcolor import colored
 import datetime
 import csv
+import logging
 
-directory_path = "../Contracts"
-# directory_path = 'C:/Github/DAppSCAN/DAppSCAN-source/contracts/Ackee_Blockchain-GoodGhosting'
+# directory_path = "../Contracts"
+directory_path = 'C:/Github/DAppSCAN/DAppSCAN-source/contracts/Ackee_Blockchain-GoodGhosting'
 
 # directory_path = "C:\\Users\\shiva\\Downloads\\_Code\\openzeppelin-contracts\\contracts-exposed\\access"
+
+
+logger = logging.getLogger(__name__)
+logger.handlers = []
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler('../log/error.log')
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 class NodeProcessor:
 
@@ -176,7 +187,7 @@ class DirectoryProcessor:
                         contract_results = analyzer.process_contracts(file_path)
                         results[file_name] = contract_results
                     except Exception as e:
-                        print(colored(f"Error while processing file {file_path}", "red"))  
+                        logger.error(f"Error while processing file {file_path}\nTrace - {e} ")
         return results
 
 class Results:
