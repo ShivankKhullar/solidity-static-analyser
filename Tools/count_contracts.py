@@ -63,18 +63,43 @@ class CFGTraverser:
 class ContractAnalyzer:
     def __init__(self):
         self.current_version = None
+        self.slither_object = None
         self.state = {
             'max_depth': 0,
             'current_depth': 0,
             'function_calls': 0
         }
 
+        self.function_metrics = {
+            "Number of Parameters": self.calculate_parameters_count,
+            "Nesting Depth": self.calculate_nesting_depth,
+            "Function Calls": self.calculate_function_call,
+            "Cyclomatic Complexity": self.calculate_cyclomatic_complexity
+            # ...add more function metrics here...
+        }
+
+        self.contract_metrics = {
+            "Inheritance Depth": self.calculate_inheritance_depth,
+            "CBO": self.calculate_cbo
+            # ...add more contract metrics here...
+        }
+
     @function_benchmark
-    def calculate_inheritance_depth(self, contract):
-        inherited_contracts = contract.inheritance
-        if not inherited_contracts:
-            return 0
-        return 1 + max(self.calculate_inheritance_depth(inherited_contract) for inherited_contract in inherited_contracts)
+    def calculate_cbo(self, contract):
+        # Limitation of running the contracts by saving them in a dictonary is that they need to have the same parameters.
+        # That is why I made the slither object acessible for the class.
+        all_contracts = self.slither_object.contracts
+        called_contracts = set()
+        for function in contract.functions:
+            for call in function.high_level_calls:
+                called_contract = call[0]
+                if called_contract != contract and called_contract in all_contracts:
+                    called_contracts.add(called_contract)
+        return len(called_contracts)
+
+    @function_benchmark
+    def calculate_parameters_count(self, function):
+        return len(function.parameters)
     
     @function_benchmark
     def calculate_nesting_depth(self, function):
@@ -82,12 +107,28 @@ class ContractAnalyzer:
         self.state['max_depth'] = 0
         traverser = CFGTraverser(NodeProcessor.process_node_for_nesting_depth)
         self.state = traverser.tree_traversal(function.entry_point, self.state)
+        return self.state['max_depth']
 
     @function_benchmark
     def calculate_function_call(self, function):
         self.state['function_calls'] = 0
         traverser = CFGTraverser(NodeProcessor.process_node_for_function_calls)
         self.state = traverser.node_list_traversal(function.nodes, self.state)
+        return self.state['function_calls']
+
+    @function_benchmark
+    def calculate_inheritance_depth(self, contract):
+        inherited_contracts = contract.inheritance
+        if not inherited_contracts:
+            return 0
+        return 1 + max(self.calculate_inheritance_depth(inherited_contract) for inherited_contract in inherited_contracts)
+
+    @function_benchmark
+    def calculate_cyclomatic_complexity(self, function):
+        cfg = function.nodes
+        E = sum(len(node.sons) for node in cfg) # No of Edges
+        N = len(cfg) # No of Nodes
+        return E - N + 2
 
     def use_solc(self, version):
         if self.current_version != version:
@@ -110,19 +151,16 @@ class ContractAnalyzer:
     def process_contracts(self, file_path):
         self.extract_solidity_version(file_path)
         slither = Slither(file_path)
+        self.slither_object = slither
         contract_results = {}
         contracts = slither.contracts
         for contract in contracts:
-            functions = contract.functions
             function_results = {}
-            for function in functions:
-                parameters = function.parameters
-                self.calculate_nesting_depth(function)
-                self.calculate_function_call(function)
-                function_results[function.name] = (len(parameters), self.state['max_depth'], self.state['function_calls'])
-            inheritance_depth = self.calculate_inheritance_depth(contract)
-            contract_results[contract.name] = (function_results, inheritance_depth)
+            for function in contract.functions:
+                function_results[function.name] = {metric_name: metric(function) for metric_name, metric in self.function_metrics.items()}
+            contract_results[contract.name] = {**{metric_name: metric(contract) for metric_name, metric in self.contract_metrics.items()}, "Functions": function_results}
         return contract_results
+
 
 class DirectoryProcessor:
 
@@ -140,20 +178,21 @@ class DirectoryProcessor:
 
 class Results:
 
+    def __init__(self, contract_metrics, function_metrics):
+        self.contract_metrics = contract_metrics
+        self.function_metrics = function_metrics
+
     def generate_table(self, results):
         table = PrettyTable()
-        table.field_names = ["File Name", "Number of Contracts", "Contract Name", "Inheritance Depth", 
-                             "Number of Functions", "Function Name", "Number of Parameters", 
-                             "Nesting Depth", "Function Calls"]
+        table.field_names = ["File Name", "Number of Contracts", "Contract Name"] + list(self.contract_metrics.keys()) + ["Number of Functions", "Function Name"] + list(self.function_metrics.keys())
         for file_name, contract_results in results.items():
-            for contract_name, data in contract_results.items():
-                function_results, inheritance_depth = data
+            for contract_name, contract_data in contract_results.items():
+                function_results = contract_data.pop("Functions")
+                contract_metrics_data = contract_data
                 for function_name, function_data in function_results.items():
-                    parameter_count, nesting_depth, function_calls = function_data
-                    table.add_row([file_name, len(contract_results), contract_name, inheritance_depth, 
-                                   len(function_results), function_name, parameter_count, 
-                                   nesting_depth, function_calls])
+                    table.add_row([file_name, len(contract_results), contract_name] + list(contract_metrics_data.values()) + [len(function_results), function_name] + list(function_data.values()))
         return table
+
 
     def print_table(self, table):
         print(colored(table, 'light_cyan'))
@@ -170,10 +209,12 @@ class Results:
             for row in table._rows:  # iterate through the data rows
                 writer.writerow(row)  # write each row    
 
+analyzer = ContractAnalyzer()
+results = Results(analyzer.contract_metrics, analyzer.function_metrics)
+
 directory_processor = DirectoryProcessor()
 results_dictionary = directory_processor.process_directory(directory_path)
 
-results = Results()
 table = results.generate_table(results_dictionary)
 
 results.print_table(table)
