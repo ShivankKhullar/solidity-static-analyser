@@ -12,8 +12,8 @@ import datetime
 import csv
 import logging
 
-# directory_path = "../Contracts"
-directory_path = 'C:/Github/DAppSCAN/DAppSCAN-source/contracts/Ackee_Blockchain-GoodGhosting'
+directory_path = "../Contracts"
+# directory_path = 'C:/Github/DAppSCAN/DAppSCAN-source/contracts/Ackee_Blockchain-GoodGhosting'
 
 # directory_path = "C:\\Users\\shiva\\Downloads\\_Code\\openzeppelin-contracts\\contracts-exposed\\access"
 
@@ -179,6 +179,11 @@ class DirectoryProcessor:
     def process_directory(self, directory_path):
         results = {}
         analyzer = ContractAnalyzer()
+
+        files_analyzed = 0
+        error_files = 0
+        total_contracts = 0
+
         for root, dirs, filenames in os.walk(directory_path):
             for file_name in filenames:
                 if file_name.endswith(".sol"):
@@ -186,9 +191,12 @@ class DirectoryProcessor:
                     try:
                         contract_results = analyzer.process_contracts(file_path)
                         results[file_name] = contract_results
+                        files_analyzed += 1
+                        total_contracts += len(contract_results)  # Count contracts analyzed
                     except Exception as e:
+                        error_files += 1
                         logger.error(f"Error while processing file {file_path}\nTrace - {e} ")
-        return results
+        return results, files_analyzed, error_files, total_contracts
 
 class Results:
 
@@ -227,7 +235,7 @@ analyzer = ContractAnalyzer()
 results = Results(analyzer.contract_metrics, analyzer.function_metrics)
 
 directory_processor = DirectoryProcessor()
-results_dictionary = directory_processor.process_directory(directory_path)
+results_dictionary, files_analyzed, error_files, total_contracts = directory_processor.process_directory(directory_path)
 
 table = results.generate_table(results_dictionary)
 
@@ -236,3 +244,5 @@ results.print_table(table)
 # results.save_table_to_csv(table, directory_path)
 
 print_benchmark_results()
+
+print(f"Files Sucessfully Analyzed: {files_analyzed}, Contracts Sucessfully Analysed {total_contracts} & Files That Gave Errors: {error_files}")
