@@ -71,7 +71,7 @@ class ContractAnalyzer:
         }
 
         self.function_metrics = {
-            "Number of Parameters": self.calculate_parameters_count,
+            "No. of Parameters": self.calculate_parameters_count,
             "Nesting Depth": self.calculate_nesting_depth,
             "Function Calls": self.calculate_function_call,
             "Cyclomatic Complexity": self.calculate_cyclomatic_complexity
@@ -172,8 +172,11 @@ class DirectoryProcessor:
             for file_name in filenames:
                 if file_name.endswith(".sol"):
                     file_path = os.path.join(root, file_name)
-                    contract_results = analyzer.process_contracts(file_path)
-                    results[file_name] = contract_results
+                    try:
+                        contract_results = analyzer.process_contracts(file_path)
+                        results[file_name] = contract_results
+                    except Exception as e:
+                        print(colored(f"Error while processing file {file_path}", "red"))  
         return results
 
 class Results:
@@ -184,7 +187,7 @@ class Results:
 
     def generate_table(self, results):
         table = PrettyTable()
-        table.field_names = ["File Name", "Number of Contracts", "Contract Name"] + list(self.contract_metrics.keys()) + ["Number of Functions", "Function Name"] + list(self.function_metrics.keys())
+        table.field_names = ["File Name", "No. of Contracts", "Contract Name"] + list(self.contract_metrics.keys()) + ["No. of Functions", "Function Name"] + list(self.function_metrics.keys())
         for file_name, contract_results in results.items():
             for contract_name, contract_data in contract_results.items():
                 function_results = contract_data.pop("Functions")
