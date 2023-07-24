@@ -198,6 +198,31 @@ class DirectoryProcessor:
                         logger.error(f"Error while processing file {file_path}\nTrace - {e} ")
         return results, files_analyzed, error_files, total_contracts
 
+# Proposed
+# class Metric:
+#     def __init__(self, name, scope, compute_function, description=None, units=None):
+#         self.name = name
+#         self.scope = scope
+#         self.compute_function = compute_function
+#         self.description = description
+#         self.units = units
+
+#     def compute(self, contract):
+#         value = self.compute_function(contract)
+#         return value
+
+# # It could be done like this.
+
+# self.inheritance_depth_metric = Metric("Inheritance Depth", self.calculate_inheritance_depth, "contract")
+# self.cyclomatic_complexity_metric = Metric("Cyclomatic Complexity", self.calculate_cyclomatic_complexity, "function")
+
+# self.metrics = [self.inheritance_depth_metric, self.cbo_metric, self.number_of_parameters_metric, self.nesting_depth_metric, self.function_calls_metric, self.cyclomatic_complexity_metric]
+
+# self.metrics_by_scope = {
+#     'contract': [m for m in self.metrics if m.scope == 'contract'],
+#     'function': [m for m in self.metrics if m.scope == 'function'],
+# }
+
 class Results:
 
     def __init__(self, contract_metrics, function_metrics):
@@ -214,7 +239,6 @@ class Results:
                 for function_name, function_data in function_results.items():
                     table.add_row([file_name, len(contract_results), contract_name] + list(contract_metrics_data.values()) + [len(function_results), function_name] + list(function_data.values()))
         return table
-
 
     def print_table(self, table):
         print(colored(table, 'light_cyan'))
