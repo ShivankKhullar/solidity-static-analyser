@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 contract Contract1 {
     uint public contract1Value;
+    uint public count2= 3;
     
     constructor(uint _value) {
         contract1Value = _value;

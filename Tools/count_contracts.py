@@ -85,15 +85,44 @@ class ContractAnalyzer:
             "No. of Parameters": self.calculate_parameters_count,
             "Nesting Depth": self.calculate_nesting_depth,
             "Function Calls": self.calculate_function_call,
-            "Cyclomatic Complexity": self.calculate_cyclomatic_complexity
+            "Cyclomatic Complexity": self.calculate_cyclomatic_complexity,
+            "Local Variable Count": self.calculate_local_variables_count
             # ...add more function metrics here...
         }
 
         self.contract_metrics = {
             "Inheritance Depth": self.calculate_inheritance_depth,
-            "CBO": self.calculate_cbo
+            "CBO": self.calculate_cbo,
+            "State Variable Count": self.calculate_state_variables_count,
+            "Avg Local Variables": self.calculate_average_local_variables_per_contract,
+            "Max Local Variables": self.calculate_maximum_local_variables_per_contract,
             # ...add more contract metrics here...
         }
+
+    @function_benchmark
+    def calculate_state_variables_count(self,contract):
+        return len(contract.variables)
+
+    @function_benchmark    
+    def calculate_local_variables_count(self,function):
+        return len(function.variables)
+
+    @function_benchmark
+    def calculate_average_local_variables_per_contract(self,contract):
+        total_local_variables = 0
+        for function in contract.functions:
+            total_local_variables += len(function.variables)
+        average_local_variables_per_contract = total_local_variables / len(contract.functions)
+        return round(average_local_variables_per_contract, 2)
+
+    @function_benchmark
+    def calculate_maximum_local_variables_per_contract(self,contract):
+        max_local_variables = 0
+        for function in contract.functions:
+            local_variables = len(function.variables)
+            if local_variables > max_local_variables:
+                max_local_variables = local_variables
+        return max_local_variables
 
     @function_benchmark
     def calculate_cbo(self, contract):
@@ -162,6 +191,7 @@ class ContractAnalyzer:
     def process_contracts(self, file_path):
         self.extract_solidity_version(file_path)
         slither = Slither(file_path)
+        slither.contracts
         self.slither_object = slither
         contract_results = {}
         contracts = slither.contracts
