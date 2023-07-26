@@ -170,6 +170,12 @@ class ContractAnalyzer:
         N = len(cfg) # No of Nodes
         return E - N + 2
 
+    @function_benchmark
+    def count_lines(self, file_path):
+        with open(file_path, 'r') as f:
+            lines = f.readlines()
+        return len(lines)
+
     def use_solc(self, version):
         if self.current_version != version:
             subprocess.run(["solc-select", "use", version])
@@ -191,15 +197,15 @@ class ContractAnalyzer:
     def process_contracts(self, file_path):
         self.extract_solidity_version(file_path)
         slither = Slither(file_path)
-        slither.contracts
         self.slither_object = slither
         contract_results = {}
         contracts = slither.contracts
+        num_lines = self.count_lines(file_path)
         for contract in contracts:
             function_results = {}
             for function in contract.functions:
                 function_results[function.name] = {metric_name: metric(function) for metric_name, metric in self.function_metrics.items()}
-            contract_results[contract.name] = {**{metric_name: metric(contract) for metric_name, metric in self.contract_metrics.items()}, "Functions": function_results}
+            contract_results[contract.name] = {**{metric_name: metric(contract) for metric_name, metric in self.contract_metrics.items()}, "Functions": function_results, "Lines": num_lines}
         return contract_results
 
 
@@ -236,15 +242,15 @@ class Results:
 
     def generate_table(self, results):
         table = PrettyTable()
-        table.field_names = ["File Name", "No. of Contracts", "Contract Name"] + list(self.contract_metrics.keys()) + ["No. of Functions", "Function Name"] + list(self.function_metrics.keys())
+        table.field_names = ["File Name", "No. Of Raw Lines", "No. of Contracts", "Contract Name"] + list(self.contract_metrics.keys()) + ["No. of Functions", "Function Name"] + list(self.function_metrics.keys())
         for file_name, contract_results in results.items():
             for contract_name, contract_data in contract_results.items():
                 function_results = contract_data.pop("Functions")
                 contract_metrics_data = contract_data
+                num_lines = contract_data.pop("Lines")
                 for function_name, function_data in function_results.items():
-                    table.add_row([file_name, len(contract_results), contract_name] + list(contract_metrics_data.values()) + [len(function_results), function_name] + list(function_data.values()))
+                    table.add_row([file_name, num_lines, len(contract_results), contract_name] + list(contract_metrics_data.values()) + [len(function_results), function_name] + list(function_data.values()))
         return table
-
 
     def print_table(self, table):
         print(colored(table, 'light_cyan'))
