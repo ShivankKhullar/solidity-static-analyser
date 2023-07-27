@@ -33,22 +33,32 @@ def count_operators(file):
 
     # print("Stream.tokens length", len(stream.tokens))
     
-    operator_counts = Counter()  # Initialize a Counter object
-    for token in stream.tokens:
-        # print(token)
-        if token.type in operator_types:
-            # print("Match", token)
-            # print("Type",token.type)
-            operator_counts[token.type] += 1  # Increment the count for this token type
+    contract_counts = {}  # Dictionary to store counts for each contract
+    contract_name = None  # The name of the current contract
+    function_name = None  # The name of the current function
+    for i, token in enumerate(stream.tokens):
+        if token.type == SolidityLexer.Contract:  # Replace with the token type for the start of a contract
+            contract_name_token = stream.tokens[i + 1]  # The next token should be the contract name
+            contract_name = contract_name_token.text
+            contract_counts[contract_name] = {}  # Start a new dictionary for this contract
+        elif token.type == SolidityLexer.Function:  # Replace with the token type for the start of a function
+            function_name_token = stream.tokens[i + 1]  # The next token should be the function name
+            function_name = function_name_token.text
+            contract_counts[contract_name][function_name] = Counter()  # Start a new Counter for this function
+        elif token.type in operator_types and function_name is not None:  # Only count operators if we're inside a function
+            contract_counts[contract_name][function_name][token.type] += 1
 
-    print("operator_counts.values() ",operator_counts.values())
-    print("operator_counts.values() ",operator_counts.keys())
-    N1 = sum(operator_counts.values())  # Total number of operator occurrences
-    n1 = len(operator_counts.keys())  # Number of unique operators
+    # Now, for each function, calculate N1 and n1
+    for contract in contract_counts:
+        for function in contract_counts[contract]:
+            operator_counter = contract_counts[contract][function]
+            N1 = sum(operator_counter.values())
+            n1 = len(operator_counter)
+            contract_counts[contract][function] = {'N1': N1, 'n1': n1}
 
-    return N1, n1
+    return contract_counts
 
-# Use the function
-file = "..\Contracts\MyContract.sol"
-N1, n1 = count_operators(file)
-print(f"N1 = {N1}, n1 = {n1}")
+file = "..\Contracts\TestingContracts\Conditions.sol"
+# file = "..\Contracts\MyContract.sol"
+results = count_operators(file)
+print(results)
