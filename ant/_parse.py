@@ -1,64 +1,80 @@
 from antlr4 import FileStream, CommonTokenStream
 from SolidityLexer import SolidityLexer
 from collections import Counter
+from token_types import operator_types, operand_types
 
-def count_operators(file):
-    input_stream = FileStream(file)
-    lexer = SolidityLexer(input_stream)
-    stream = CommonTokenStream(lexer)
-    stream.fill()
+class HalsteadExtractor:
+    def __init__(self, file: str, what_to_calculate: str):
+        """
+        The contructor initializes all the things needed for antlr.
+        Args:
+            file: The file to extract metrics from.
+            what_to_calculate: Either 'operators' or 'operands'.
+        """
+        self.file = file
+        self.what_to_calculate = what_to_calculate
+        self.input_stream = FileStream(file)
+        self.lexer = SolidityLexer(self.input_stream)
+        self.stream = CommonTokenStream(self.lexer)
+        self.stream.fill()
 
-    operator_types = {
-        SolidityLexer.While, SolidityLexer.LParen, SolidityLexer.RParen,
-        SolidityLexer.LBrack, SolidityLexer.RBrack, SolidityLexer.LBrace,
-        SolidityLexer.RBrace, SolidityLexer.Colon, SolidityLexer.Semicolon,
-        SolidityLexer.Period, SolidityLexer.Conditional, SolidityLexer.DoubleArrow,
-        SolidityLexer.RightArrow, SolidityLexer.Assign, SolidityLexer.AssignBitOr,
-        SolidityLexer.AssignBitXor, SolidityLexer.AssignBitAnd, SolidityLexer.AssignShl,
-        SolidityLexer.AssignSar, SolidityLexer.AssignShr, SolidityLexer.AssignAdd,
-        SolidityLexer.AssignSub, SolidityLexer.AssignMul, SolidityLexer.AssignDiv,
-        SolidityLexer.AssignMod, SolidityLexer.Comma, SolidityLexer.Or,
-        SolidityLexer.And, SolidityLexer.BitOr, SolidityLexer.BitXor,
-        SolidityLexer.BitAnd, SolidityLexer.Shl, SolidityLexer.Sar,
-        SolidityLexer.Shr, SolidityLexer.Add, SolidityLexer.Sub,
-        SolidityLexer.Mul, SolidityLexer.Div, SolidityLexer.Mod,
-        SolidityLexer.Exp, SolidityLexer.Equal, SolidityLexer.NotEqual,
-        SolidityLexer.LessThan, SolidityLexer.GreaterThan, SolidityLexer.LessThanOrEqual,
-        SolidityLexer.GreaterThanOrEqual, SolidityLexer.Not, SolidityLexer.BitNot,
-        SolidityLexer.Inc, SolidityLexer.Dec,
-        SolidityLexer.Bytes, SolidityLexer.Else, SolidityLexer.FixedBytes,
-        SolidityLexer.For, SolidityLexer.UnsignedIntegerType, SolidityLexer.Return,
-        SolidityLexer.If
-    }
+        if self.what_to_calculate == "operators":
+            self.types_to_count = operator_types
+        elif self.what_to_calculate == "operands":
+            self.types_to_count = operand_types
+        else:
+            raise ValueError("what_to_calculate must be either 'operators' or 'operands'")
+        
+        self.contract_counts = {}
+        self.contract_name = None
+        self.function_name = None
 
-    # print("Stream.tokens length", len(stream.tokens))
-    
-    contract_counts = {}  # Dictionary to store counts for each contract
-    contract_name = None  # The name of the current contract
-    function_name = None  # The name of the current function
-    for i, token in enumerate(stream.tokens):
-        if token.type == SolidityLexer.Contract:  # Replace with the token type for the start of a contract
-            contract_name_token = stream.tokens[i + 1]  # The next token should be the contract name
-            contract_name = contract_name_token.text
-            contract_counts[contract_name] = {}  # Start a new dictionary for this contract
-        elif token.type == SolidityLexer.Function:  # Replace with the token type for the start of a function
-            function_name_token = stream.tokens[i + 1]  # The next token should be the function name
-            function_name = function_name_token.text
-            contract_counts[contract_name][function_name] = Counter()  # Start a new Counter for this function
-        elif token.type in operator_types and function_name is not None:  # Only count operators if we're inside a function
-            contract_counts[contract_name][function_name][token.type] += 1
+    def count(self) -> dict:
+        """
+        Count the total and unique operators/operands for each function in each contract.
+        Returns:
+            A dictionary where the keys are contract names, the values are dictionaries where the keys are function names
+            and the values are dictionaries with keys 'total_count' and 'unique_count' representing the total number
+            of operators/operands and the number of unique operators/operands, respectively.
+            Eg - {'SampleContract': {'incrementCount': {'N1': 6, 'n1': 6}, 'decrementCount': {'N1': 52, 'n1': 12}, 'resetCount': {'N1': 6, 'n1': 6}, 'complexFunction': {'N1': 69, 'n1': 17}}}
+        """
+        for i, token in enumerate(self.stream.tokens):
+            if token.type == SolidityLexer.Contract:
+                self._start_new_contract(i)
+            elif token.type == SolidityLexer.Function:
+                self._start_new_function(i)
+            elif token.type in self.types_to_count and self.function_name is not None:
+                self.contract_counts[self.contract_name][self.function_name][token.type] += 1
+        self._calculate_total_and_unique_counts()
+        return self.contract_counts
 
-    # Now, for each function, calculate N1 and n1
-    for contract in contract_counts:
-        for function in contract_counts[contract]:
-            operator_counter = contract_counts[contract][function]
-            N1 = sum(operator_counter.values())
-            n1 = len(operator_counter)
-            contract_counts[contract][function] = {'N1': N1, 'n1': n1}
+    def _start_new_contract(self, i: int):
+        """
+        Args:
+            i: The index of the 'contract' token.
+        """
+        contract_name_token = self.stream.tokens[i + 1]
+        self.contract_name = contract_name_token.text
+        self.contract_counts[self.contract_name] = {}
 
-    return contract_counts
+    def _start_new_function(self, i: int):
+        """
+        Args:
+            i: The index of the 'function' token.
+        """
+        function_name_token = self.stream.tokens[i + 1]
+        self.function_name = function_name_token.text
+        self.contract_counts[self.contract_name][self.function_name] = Counter()
+
+    def _calculate_total_and_unique_counts(self):
+        for contract in self.contract_counts:
+            for function in self.contract_counts[contract]:
+                operator_counter = self.contract_counts[contract][function]
+                total_count = sum(operator_counter.values())
+                unique_count = len(operator_counter)
+                self.contract_counts[contract][function] = {'total_count': total_count, 'unique_count': unique_count}
 
 file = "..\Contracts\TestingContracts\Conditions.sol"
-# file = "..\Contracts\MyContract.sol"
-results = count_operators(file)
+extractor = HalsteadExtractor(file, "operators")
+results = extractor.count()
 print(results)
