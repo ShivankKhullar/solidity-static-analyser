@@ -23,6 +23,15 @@ operator_types = [
     SolidityLexer.If
 ]
 
-operand_types = [
-    # Add your operand types here...
+operand_types = [    
+    # Identifiers are used for variables and funtions
+    # Just need to make sure function and contract definifions aren't counted.
+    # So if a Indentifier is after a function or contract token it shouldn't be counted.
+    SolidityLexer.Identifier, SolidityLexer.DecimalNumber, SolidityLexer.HexNumber,
+    SolidityLexer.OctalNumber, SolidityLexer.False_, SolidityLexer.True_,
+    SolidityLexer.Hex, SolidityLexer.DecimalNumberFollowedByIdentifier,
+    SolidityLexer.HexString, SolidityLexer.HexNumber, SolidityLexer.String,
+    SolidityLexer.NonEmptyStringLiteral, SolidityLexer.EmptyStringLiteral,
+    SolidityLexer.UnicodeStringLiteral,
+    # add any other token types you want to count as operands...
 ]

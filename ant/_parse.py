@@ -39,12 +39,17 @@ class HalsteadExtractor:
             Eg - {'SampleContract': {'incrementCount': {'N1': 6, 'n1': 6}, 'decrementCount': {'N1': 52, 'n1': 12}, 'resetCount': {'N1': 6, 'n1': 6}, 'complexFunction': {'N1': 69, 'n1': 17}}}
         """
         for i, token in enumerate(self.stream.tokens):
+            # print(token, token.type,token.text)
             if token.type == SolidityLexer.Contract:
                 self._start_new_contract(i)
             elif token.type == SolidityLexer.Function:
                 self._start_new_function(i)
             elif token.type in self.types_to_count and self.function_name is not None:
-                self.contract_counts[self.contract_name][self.function_name][token.type] += 1
+                # Don't count the token if the previous token was a Function or Contract token
+                # This is for skiping declarations when counting operands.
+                if i > 0 and self.stream.tokens[i-1].type not in [SolidityLexer.Function, SolidityLexer.Contract]:
+                    # print("Counted",token.type)
+                    self.contract_counts[self.contract_name][self.function_name][token.text] += 1
         self._calculate_total_and_unique_counts()
         return self.contract_counts
 
@@ -75,6 +80,10 @@ class HalsteadExtractor:
                 self.contract_counts[contract][function] = {'total_count': total_count, 'unique_count': unique_count}
 
 file = "..\Contracts\TestingContracts\Conditions.sol"
-extractor = HalsteadExtractor(file, "operators")
-results = extractor.count()
-print(results)
+extractor_operators = HalsteadExtractor(file, "operators")
+results_operators = extractor_operators.count()
+print(results_operators)
+
+extractor_operands = HalsteadExtractor(file, "operands")
+results_operands = extractor_operands.count()
+print(results_operands)
