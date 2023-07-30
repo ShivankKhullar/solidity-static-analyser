@@ -15,9 +15,6 @@ import logging
 directory_path = "../Contracts"
 # directory_path = 'C:/Github/DAppSCAN/DAppSCAN-source/contracts/Ackee_Blockchain-GoodGhosting'
 
-# directory_path = "C:\\Users\\shiva\\Downloads\\_Code\\openzeppelin-contracts\\contracts-exposed\\access"
-
-
 logger = logging.getLogger(__name__)
 logger.handlers = []
 logger.setLevel(logging.DEBUG)

@@ -2,8 +2,9 @@ from SolidityLexer import SolidityLexer
 
 operator_types = [
     SolidityLexer.While, SolidityLexer.LParen, SolidityLexer.RParen,
-    SolidityLexer.LBrack, SolidityLexer.RBrack, SolidityLexer.LBrace,
-    SolidityLexer.RBrace, SolidityLexer.Colon, SolidityLexer.Semicolon,
+    SolidityLexer.LBrack, SolidityLexer.RBrace, SolidityLexer.LBrace,
+    # SolidityLexer.RBrack, We won't count ], because it not a seprate operation like a closing ) or }
+    SolidityLexer.Colon, SolidityLexer.Semicolon,
     SolidityLexer.Period, SolidityLexer.Conditional, SolidityLexer.DoubleArrow,
     SolidityLexer.RightArrow, SolidityLexer.Assign, SolidityLexer.AssignBitOr,
     SolidityLexer.AssignBitXor, SolidityLexer.AssignBitAnd, SolidityLexer.AssignShl,

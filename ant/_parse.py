@@ -39,12 +39,13 @@ class HalsteadExtractor:
             Eg - {'SampleContract': {'incrementCount': {'N1': 6, 'n1': 6}, 'decrementCount': {'N1': 52, 'n1': 12}, 'resetCount': {'N1': 6, 'n1': 6}, 'complexFunction': {'N1': 69, 'n1': 17}}}
         """
         for i, token in enumerate(self.stream.tokens):
-            # print(token, token.type,token.text)
+            print(token, token.type,token.text)
             if token.type == SolidityLexer.Contract:
                 self._start_new_contract(i)
             elif token.type == SolidityLexer.Function:
                 self._start_new_function(i)
             elif token.type in self.types_to_count and self.function_name is not None:
+                print(self.contract_name,self.function_name)
                 # Don't count the token if the previous token was a Function or Contract token
                 # This is for skiping declarations when counting operands.
                 if i > 0 and self.stream.tokens[i-1].type not in [SolidityLexer.Function, SolidityLexer.Contract]:
@@ -61,6 +62,7 @@ class HalsteadExtractor:
         contract_name_token = self.stream.tokens[i + 1]
         self.contract_name = contract_name_token.text
         self.contract_counts[self.contract_name] = {}
+        self.function_name = None # When we step into a new contract we erase the last function.
 
     def _start_new_function(self, i: int):
         """
@@ -75,11 +77,11 @@ class HalsteadExtractor:
         for contract in self.contract_counts:
             for function in self.contract_counts[contract]:
                 operator_counter = self.contract_counts[contract][function]
-                total_count = sum(operator_counter.values())
+                total_count = sum(operator_counter.values()) 
                 unique_count = len(operator_counter)
                 self.contract_counts[contract][function] = {'total_count': total_count, 'unique_count': unique_count}
 
-file = "..\Contracts\TestingContracts\Conditions.sol"
+file = "..\Contracts\TestingContracts\Coupling.sol"
 extractor_operators = HalsteadExtractor(file, "operators")
 results_operators = extractor_operators.count()
 print(results_operators)
