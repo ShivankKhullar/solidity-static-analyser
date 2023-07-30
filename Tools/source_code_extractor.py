@@ -5,16 +5,17 @@ def calculate_N1_for_each_function(file_path):
         source_code = f.read()
 
     # Split the source code into functions
-    functions = re.split(r'\bfunction\b', source_code)
+    contracts = re.split(r'\bcontract\b', source_code)
 
     results = {}
 
-    for i, function in enumerate(functions):
+    for i, contract in enumerate(contracts):
         # Skip the first split result, as it is the pragma
         if i == 0:
             continue
 
-        print(function)
+        print(contract)
+        print("---------")
         
     
 
