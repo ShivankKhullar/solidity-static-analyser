@@ -1,5 +1,5 @@
 from antlr4 import FileStream, CommonTokenStream
-from SolidityLexer import SolidityLexer
+from antlr_generated_files.SolidityLexer import SolidityLexer
 from collections import Counter
 from token_types import operator_types, operand_types
 
@@ -39,13 +39,13 @@ class HalsteadExtractor:
             Eg - {'SampleContract': {'incrementCount': {'N1': 6, 'n1': 6}, 'decrementCount': {'N1': 52, 'n1': 12}, 'resetCount': {'N1': 6, 'n1': 6}, 'complexFunction': {'N1': 69, 'n1': 17}}}
         """
         for i, token in enumerate(self.stream.tokens):
-            print(token, token.type,token.text)
+            # print(token, token.type,token.text)
             if token.type == SolidityLexer.Contract:
                 self._start_new_contract(i)
             elif token.type == SolidityLexer.Function:
                 self._start_new_function(i)
             elif token.type in self.types_to_count and self.function_name is not None:
-                print(self.contract_name,self.function_name)
+                # print(self.contract_name,self.function_name)
                 # Don't count the token if the previous token was a Function or Contract token
                 # This is for skiping declarations when counting operands.
                 if i > 0 and self.stream.tokens[i-1].type not in [SolidityLexer.Function, SolidityLexer.Contract]:

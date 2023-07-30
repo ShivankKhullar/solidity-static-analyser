@@ -1,4 +1,4 @@
-from SolidityLexer import SolidityLexer
+from antlr_generated_files.SolidityLexer import SolidityLexer
 
 operator_types = [
     SolidityLexer.While, SolidityLexer.LParen, SolidityLexer.RParen,
