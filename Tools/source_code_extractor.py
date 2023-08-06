@@ -1,6 +1,6 @@
 import re
 
-def calculate_N1_for_each_function(file_path):
+def extract_contract_source_code(file_path):
     with open(file_path, 'r') as f:
         source_code = f.read()
 
@@ -20,4 +20,4 @@ def calculate_N1_for_each_function(file_path):
     
 
 
-calculate_N1_for_each_function("..\\Contracts\\Contract2.sol")
+extract_contract_source_code("..\\Contracts\\Contract2.sol")
