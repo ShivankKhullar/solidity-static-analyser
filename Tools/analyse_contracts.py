@@ -1,3 +1,8 @@
+"""
+Developed By: Shivank Khullar
+Description: This file primarily extracts a majority of the metrics and presents them in a tabular format.
+"""
+
 import subprocess
 from slither.slither import Slither
 from slither.core.cfg.node import NodeType
