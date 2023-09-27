@@ -1,3 +1,10 @@
+"""
+Developed By: Shivank Khullar
+Description: Utility to identify and install missing Solidity compiler versions 
+             required by the contracts in a given directory. Uses solc-select for 
+             version management and benchmarks the version extraction process.
+"""
+
 import os
 import subprocess
 from slither.slither import Slither
