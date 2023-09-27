@@ -1,79 +1,22 @@
-## Project Documentation
+# Solidity Static Analyser 🛡️
 
-### Prerequisites
-- Python 3.x installed
-- Git installed
+Welcome to the Solidity Static Analyser project. This tool is designed to analyze Solidity smart contracts to uncover potential vulnerabilities, ensuring the robustness and security of Ethereum projects.
 
-### Setting Up the Project
+## Introduction 🌟
 
-1. Clone the project repository:
-   ```
-   git clone https://github.com/ShivankKhullar/Static-Analysers-Research
-   ```
+Developed by [Shivank Khullar](https://github.com/ShivankKhullar) during a summer internship at Brunel University, this project was guided by [Dr. Rumyana Neykova](https://www.brunel.ac.uk/people/rumyana-neykova). The collaboration aimed to create a tool that not only identifies vulnerabilities in smart contracts but also serves as a foundation for future research papers in the domain.
 
-2. Create a virtual environment:
-   ```
-   python -m venv myenv
-   // myenv is just a name.
-   ```
+## Key Achievements 🏆
 
-3. Activate the virtual environment:
-   - For Windows:
-     ```
-     myenv\Scripts\activate
-     ```
-   - For macOS/Linux:
-     ```
-     source myenv/bin/activate
-     ```
+- **Metrics Extraction**: The current version of the tool is primarily focused on extracting a variety of metrics from smart contracts, including Halstead, OOP metrics, and count metrics.
+- **Rapid Development**: A significant accomplishment, especially considering the project's development spanned just one month.
 
-4. Install project dependencies:
-   ```
-   pip install slither
-   pip install solc-select
+## Purpose & Future Directions 🚀
 
-   // If solc-select gives troubles try running - npm install -g solc
+- **Insightful Analysis**: Beyond its immediate functionality, the insights derived from this tool will contribute to forthcoming research papers, shedding light on the intricacies of smart contract vulnerabilities.
+- **Comprehensive Dashboard**: The primary goal is to provide clients with a comprehensive dashboard to assess the quality of Ethereum projects.
+- **Ongoing Development**: The analysis part, aimed at interpreting the extracted metrics to identify vulnerabilities, is currently under development and will be a part of future releases.
 
-   // In the future we can create a text file with all dependencies.
-   // pip install -r requirements.txt
-   ```
+## Getting Started 🚀
 
-
-### Using `solc-select`
-
-`solc-select` is a command-line tool that allows you to manage and switch between different versions of the Solidity compiler.
-
-
-#### Selecting a Solidity Version
-
-1. Install a specific Solidity version:
-   ```
-   solc-select install <version>
-   ```
-   Replace `<version>` with the desired Solidity version, e.g., `0.8.0`.
-
-2. Use a specific Solidity version:
-   ```
-   solc-select use <version>
-   ```
-   Replace `<version>` with the desired Solidity version, e.g., `0.8.0`.
-
-### Running the Program
-
-1. Ensure that the desired Solidity version is selected using `solc-select`.
-
-2. Execute the program:
-   ```
-   python count_contracts.py
-   ```
-
-The program will scan the `Contracts` directory, count the number of contracts in each Solidity file, and display the results.
-
-### Additional Notes
-
-- To deactivate the virtual environment, run:
-  ```
-  deactivate
-  ```
-
-- If you encounter any issues with `solc-select`, refer to the `solc-select` documentation for troubleshooting and advanced usage instructions.
+For detailed instructions on setting up and running the project, please refer to the [How to Setup the Project](Setup.md) guide.
