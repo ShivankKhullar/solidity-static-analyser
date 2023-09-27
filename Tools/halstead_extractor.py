@@ -1,3 +1,9 @@
+"""
+Developed By: Shivank Khullar
+Description: Extracts Halstead metrics from Solidity contracts using ANTLR4. 
+             Computes total and unique operators/operands for each function in a contract.
+"""
+
 from antlr4 import FileStream, CommonTokenStream
 from antlr_generated_files.SolidityLexer import SolidityLexer
 from collections import Counter
