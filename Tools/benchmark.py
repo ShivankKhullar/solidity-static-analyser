@@ -1,4 +1,8 @@
-# benchmark.py
+"""
+Developed By: Shivank Khullar
+Description: Utility to benchmark the execution time of functions. 
+It provides a decorator to measure the time taken by functions and a method to print the accumulated results.
+"""
 import time
 from termcolor import colored
 
