@@ -3,6 +3,7 @@ Developed By: Shivank Khullar
 Description: This file primarily extracts a majority of the metrics and presents them in a tabular format.
 """
 
+# Importing necessary libraries and modules
 import subprocess
 from slither.slither import Slither
 from slither.core.cfg.node import NodeType
@@ -18,8 +19,8 @@ import csv
 import logging
 
 directory_path = "../Contracts"
-# directory_path = 'C:/Github/DAppSCAN/DAppSCAN-source/contracts/Ackee_Blockchain-GoodGhosting'
 
+# Configuring the logger
 logger = logging.getLogger(__name__)
 logger.handlers = []
 logger.setLevel(logging.DEBUG)
@@ -30,9 +31,14 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 class NodeProcessor:
-
+    """
+    Static methods to process nodes for extracting metrics like nesting depth and function calls.
+    """
     @staticmethod
     def process_node_for_nesting_depth(node, state):
+        """
+        Processes a node to compute the nesting depth.
+        """
         if node is None:
             state['current_depth'] += 0
         elif node.type in {NodeType.IF, NodeType.STARTLOOP}:
@@ -45,12 +51,17 @@ class NodeProcessor:
 
     @staticmethod
     def process_node_for_function_calls(node, state):
+        """
+        Processes a node to count the function calls.
+        """
         if isinstance(node.expression, (CallExpression, LibraryCall)):
             state['function_calls'] += 1
         return state
 
 class CFGTraverser:
-
+    """
+    A utility class to traverse the Control Flow Graph (CFG) of a function and apply a specified processor to each node.
+    """
     def __init__(self, processor):
         self.processor = processor
         self.visited_nodes = set()
@@ -74,7 +85,13 @@ class CFGTraverser:
         return state
 
 class ContractAnalyzer:
+    """
+    Analyzes Solidity contracts to extract various metrics.
+    """
     def __init__(self):
+        """
+        Initializes a new instance of the ContractAnalyzer with default state and metrics dictionaries.
+        """
         self.current_version = None
         self.slither_object = None
         self.state = {
@@ -128,8 +145,9 @@ class ContractAnalyzer:
 
     @function_benchmark
     def calculate_cbo(self, contract):
-        # Limitation of running the contracts by saving them in a dictonary is that they need to have the same parameters.
-        # That is why I made the slither object acessible for the class.
+        """
+        Calculates the Coupling Between Object (CBO) for a contract.
+        """
         all_contracts = self.slither_object.contracts
         called_contracts = set()
         for function in contract.functions:
@@ -212,7 +230,9 @@ class ContractAnalyzer:
 
 
 class DirectoryProcessor:
-
+    """
+    Processes a directory of Solidity files to extract contract metrics and log any errors encountered during processing.
+    """
     @function_benchmark
     def process_directory(self, directory_path):
         results = {}
@@ -237,7 +257,9 @@ class DirectoryProcessor:
         return results, files_analyzed, error_files, total_contracts
 
 class Results:
-
+    """
+    Handles the formatting and output of the analysis results.
+    """
     def __init__(self, contract_metrics, function_metrics):
         self.contract_metrics = contract_metrics
         self.function_metrics = function_metrics
